@@ -37,7 +37,7 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-st.title("Sistema de Gerenciamento de Estoque - Comércio Eletrônico")
+st.title("Comércio Eletrônico")
 
 # =============================
 # ESTRUTURAS DE DADOS
