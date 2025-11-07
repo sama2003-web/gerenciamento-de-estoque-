@@ -1,37 +1,5 @@
-# app.py
-# Código do Sistema de Gerenciamento de Estoque (Streamlit + Pandas)
-# As importações são protegidas para exibir uma mensagem clara caso faltem dependências.
-
-try:
-    import streamlit as st
-    import pandas as pd
-except Exception as e:
-    # Mensagem clara para debug (logs do serviço / terminal)
-    import sys, traceback
-    msg = (
-        "Erro ao importar módulos necessários: {}\n\n"
-        "Soluções comuns:\n"
-        "- Verifique se existe um arquivo 'requirements.txt' com as linhas:\n"
-        "    streamlit\n"
-        "    pandas\n"
-        "- No Streamlit Cloud, confirme que você escolheu o arquivo 'app.py' como entrada.\n"
-        "- Se estiver rodando localmente, execute: pip install streamlit pandas\n\n"
-        "Traceback:\n"
-    ).format(e)
-    tb = traceback.format_exc()
-    # Imprime nos logs/terminal
-    print(msg + tb, file=sys.stderr)
-    # Tenta exibir na interface do Streamlit caso ele esteja parcialmente disponível
-    try:
-        import streamlit as st  # re-tentativa (pode falhar)
-        st.title("Erro de Dependências")
-        st.error(msg)
-        st.text(tb)
-        # interrompe execução para evitar erros a seguir
-        st.stop()
-    except Exception:
-        # Se nem Streamlit estiver disponível, interrompe com exceção
-        raise RuntimeError(msg + tb)
+import streamlit as st
+import pandas as pd
 
 # =============================
 # ESTILO VISUAL
@@ -113,7 +81,6 @@ def consultar_produtos():
         st.info("Nenhum produto cadastrado ainda.")
 
 def atualizar_estoque(nome, nova_qtd, tipo_movimentacao, responsavel):
-    # Atualiza a quantidade do produto selecionado e registra movimentação com a quantidade alterada
     st.session_state.estoque.loc[
         st.session_state.estoque["Nome"] == nome, "Quantidade"
     ] = nova_qtd
@@ -136,6 +103,7 @@ def gerar_relatorios():
 # =============================
 # INTERFACE PRINCIPAL
 # =============================
+
 aba = st.sidebar.radio(
     "Menu",
     ["Dashboard", "Cadastro de Produtos", "Consulta de Produtos", "Movimentar Estoque", "Remover Produtos", "Relatórios", "Tabela Verdade"]
@@ -154,7 +122,7 @@ if aba == "Dashboard":
         with col1:
             st.markdown(f"<div class='metric-card'><h3>Total de Produtos</h3><h2>{total_produtos}</h2></div>", unsafe_allow_html=True)
         with col2:
-            st.markdown(f"<div class='metric-card'><h3>Quantidade Total</h3><h2>{int(total_quantidade)}</h2></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='metric-card'><h3>Quantidade Total</h3><h2>{total_quantidade}</h2></div>", unsafe_allow_html=True)
         with col3:
             st.markdown(f"<div class='metric-card'><h3>Valor Total (R$)</h3><h2>{valor_total:,.2f}</h2></div>", unsafe_allow_html=True)
     else:
@@ -166,12 +134,12 @@ elif aba == "Cadastro de Produtos":
     nome = st.text_input("Nome do produto:")
     categoria = st.text_input("Categoria:")
     quantidade = st.number_input("Quantidade:", min_value=0, step=1)
-    preco = st.number_input("Preço (R$):", min_value=0.0, step=0.01, format="%.2f")
+    preco = st.number_input("Preço (R$):", min_value=0.0, step=0.01)
     localizacao = st.text_input("Localização no depósito:")
 
     if st.button("Salvar Produto"):
         if nome.strip():
-            cadastrar_produto(nome, categoria, int(quantidade), float(preco), localizacao)
+            cadastrar_produto(nome, categoria, quantidade, preco, localizacao)
             st.success("Produto cadastrado com sucesso.")
         else:
             st.warning("O nome do produto é obrigatório.")
@@ -185,13 +153,13 @@ elif aba == "Consulta de Produtos":
 elif aba == "Movimentar Estoque":
     st.header("Movimentar Estoque (Entrada ou Saída)")
     if not st.session_state.estoque.empty:
-        produto_sel = st.selectbox("Selecione o produto:", st.session_state.estoque["Nome"].tolist())
+        produto_sel = st.selectbox("Selecione o produto:", st.session_state.estoque["Nome"])
         nova_qtd = st.number_input("Nova quantidade:", min_value=0, step=1)
         tipo = st.selectbox("Tipo de movimentação:", ["Entrada", "Saída"])
         responsavel = st.text_input("Responsável:")
 
         if st.button("Registrar Movimentação"):
-            atualizar_estoque(produto_sel, int(nova_qtd), tipo, responsavel)
+            atualizar_estoque(produto_sel, nova_qtd, tipo, responsavel)
             st.success(f"Movimentação registrada para o produto {produto_sel}.")
     else:
         st.info("Cadastre produtos antes de movimentar o estoque.")
@@ -200,7 +168,7 @@ elif aba == "Movimentar Estoque":
 elif aba == "Remover Produtos":
     st.header("Remover Produto")
     if not st.session_state.estoque.empty:
-        produto_sel = st.selectbox("Selecione o produto:", st.session_state.estoque["Nome"].tolist())
+        produto_sel = st.selectbox("Selecione o produto:", st.session_state.estoque["Nome"])
         if st.button("Remover"):
             remover_produto(produto_sel)
             st.success(f"Produto '{produto_sel}' removido com sucesso.")
